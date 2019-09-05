@@ -1,0 +1,484 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>kafka-connect-hdfs</groupId>
+	<artifactId>kafka-connect-customized</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>Nielsen-Kafka-Connect</name>
+
+	<repositories>
+		<repository>
+			<id>confluent</id>
+			<name>Confluent</name>
+			<url>https://repository.mulesoft.org/nexus/content/repositories/public/</url>
+		</repository>
+		<repository>
+			<id>my-repo2</id>
+			<name>connect repo</name>
+			<url>http://maven.icm.edu.pl/artifactory/repo/</url>
+		</repository>
+		<repository>
+			<id>my-repo3</id>
+			<name>storage repo</name>
+			<url>http://packages.confluent.io/maven/</url>
+		</repository>
+	</repositories>
+
+	<properties>
+		<confluent.version>5.2.2</confluent.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<confluent.hub.packaging.version>0.11.1</confluent.hub.packaging.version>
+		<confluent.licencing.version>0.3.0</confluent.licencing.version>
+		<confluent.subscription.url>${project.organization.url}/subscription/</confluent.subscription.url>
+		<hadoop.version>3.1.2</hadoop.version>
+		<hive.version>3.1.1</hive.version>
+		<apacheds-jdbm1.version>2.0.0-M2</apacheds-jdbm1.version>
+		<kafka.connect.maven.plugin.version>0.11.1</kafka.connect.maven.plugin.version>
+		<netty.version>4.0.52.Final</netty.version>
+		<bouncycastle.version>1.45</bouncycastle.version>
+		<commons.lang3.version>3.8.1</commons.lang3.version>
+		<license.current.year>2019</license.current.year>
+		<project.inceptionYear>2019</project.inceptionYear>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<maven.compiler.source>1.8</maven.compiler.source>
+	</properties>
+
+	<dependencies>
+
+		<dependency>
+			<groupId>org.apache.kafka</groupId>
+			<artifactId>connect-api</artifactId>
+			<version>2.3.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.kafka</groupId>
+			<artifactId>connect-json</artifactId>
+			<version>2.3.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.confluent</groupId>
+			<artifactId>connect-utils</artifactId>
+			<version>0.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>io.confluent</groupId>
+			<artifactId>kafka-connect-storage-common</artifactId>
+			<version>5.2.2</version>
+		</dependency>
+		<dependency>
+			<groupId>io.confluent</groupId>
+			<artifactId>kafka-connect-storage-core</artifactId>
+			<version>5.2.2</version>
+		</dependency>
+		<dependency>
+			<groupId>io.confluent</groupId>
+			<artifactId>kafka-connect-storage-format</artifactId>
+			<version>5.2.2</version>
+		</dependency>
+		<dependency>
+			<groupId>io.confluent</groupId>
+			<artifactId>kafka-connect-storage-partitioner</artifactId>
+			<version>5.2.2</version>
+		</dependency>
+		<dependency>
+			<groupId>io.confluent</groupId>
+			<artifactId>kafka-connect-storage-wal</artifactId>
+			<version>5.2.2</version>
+		</dependency>
+		<dependency>
+			<groupId>io.confluent</groupId>
+			<artifactId>kafka-connect-storage-hive</artifactId>
+			<version>5.2.2</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.spotbugs</groupId>
+			<artifactId>spotbugs-annotations</artifactId>
+			<version>3.1.12</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>${commons.lang3.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk16</artifactId>
+			<version>${bouncycastle.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.9.9</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-minicluster</artifactId>
+			<version>${hadoop.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-minikdc</artifactId>
+			<version>${hadoop.version}</version>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<!-- exclude this from hadoop minikdc as the minikdc depends on the 
+						apacheds-jdbm1 bundle, which is not available in maven central -->
+					<groupId>org.apache.directory.jdbm</groupId>
+					<artifactId>apacheds-jdbm1</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<!-- add this to satisfy the dependency requirement of apacheds-jdbm1 -->
+			<groupId>org.apache.directory.jdbm</groupId>
+			<artifactId>apacheds-jdbm1</artifactId>
+			<version>${apacheds-jdbm1.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- add kryo to fill a gap in hive-exec -->
+		<dependency>
+			<groupId>com.esotericsoftware</groupId>
+			<artifactId>kryo</artifactId>
+			<version>4.0.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.esotericsoftware.kryo</groupId>
+			<artifactId>kryo</artifactId>
+			<version>2.24.0</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<dependencyManagement>
+		<dependencies>
+			<!-- Lock in hadoop/hive versions -->
+			<dependency>
+				<groupId>org.apache.hadoop</groupId>
+				<artifactId>hadoop-client</artifactId>
+				<version>${hadoop.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.hive.hcatalog</groupId>
+				<artifactId>hive-hcatalog-core</artifactId>
+				<version>${hive.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.hive</groupId>
+				<artifactId>hive-exec</artifactId>
+				<classifier>core</classifier>
+				<version>${hive.version}</version>
+			</dependency>
+			<!-- force major version to avoid SNAPSHOT issues (hive pulls in a SNAPSHOT 
+				by default) -->
+			<dependency>
+				<groupId>org.glassfish</groupId>
+				<artifactId>javax.el</artifactId>
+				<version>3.0.0</version>
+			</dependency>
+
+			<!-- Lock in io.netty versions in the project to avoid conflicts -->
+			<dependency>
+				<groupId>io.netty</groupId>
+				<artifactId>netty-all</artifactId>
+				<version>${netty.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.netty</groupId>
+				<artifactId>netty-buffer</artifactId>
+				<version>${netty.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.netty</groupId>
+				<artifactId>netty-common</artifactId>
+				<version>${netty.version}</version>
+			</dependency>
+		</dependencies>
+
+	</dependencyManagement>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>com.lewisd</groupId>
+					<artifactId>lint-maven-plugin</artifactId>
+					<version>0.0.8</version>
+					<executions>
+						<execution>
+							<id>pom-lint</id>
+							<phase>validate</phase>
+							<goals>
+								<goal>check</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+				<plugin>
+					<groupId>io.confluent</groupId>
+					<version>${kafka.connect.maven.plugin.version}</version>
+					<artifactId>kafka-connect-maven-plugin</artifactId>
+					<executions>
+						<execution>
+							<goals>
+								<goal>kafka-connect</goal>
+							</goals>
+							<configuration>
+								<title>Kafka Connect HDFS 3</title>
+								<version>${project.version}-preview</version>
+								<documentationUrl>https://docs.confluent.io/current/connect/kafka-connect-hdfs/hdfs3/index.html</documentationUrl>
+								<description>
+									The HDFS 3 connector allows you to export data from
+									Kafka topics
+									to HDFS 3.x files in a variety of formats and
+									integrates with
+									Hive to make data immediately available for
+									querying with
+									HiveQL.
+
+									The connector periodically polls data from
+									Kafka and writes them
+									to an HDFS 3.x cluster. The data from each
+									Kafka topic is
+									partitioned by the provided partitioner and
+									divided into
+									chunks. Each chunk of data is represented as an
+									HDFS file with
+									topic, Kafka partition, start and end offsets of
+									this data
+									chunk in the filename. If no partitioner is specified
+									in the
+									configuration, the default partitioner which preserves
+									the
+									Kafka partitioning is used. The size of each data chunk is
+									determined by the number of records written to HDFS, the time
+									written to HDFS and schema compatibility.
+
+									The HDFS connector
+									integrates with Hive and when it is enabled,
+									the connector
+									automatically creates an external Hive
+									partitioned table for
+									each Kafka topic and updates the table
+									according to the
+									available data in HDFS.
+								</description>
+								<licenses>
+									<license>
+										<name>Confluent Community License</name>
+										<url>http://www.confluent.io/confluent-community-license</url>
+										<distribution>repo</distribution>
+									</license>
+								</licenses>
+								<supportProviderName>Confluent, Inc.</supportProviderName>
+								<supportSummary><![CDATA[Confluent is introducing this preview connector to
+                                gain early feedback from developers. It should only be used for
+                                evaluation and non-production testing purposes or to provide
+                                feedback to Confluent and is subject to the
+                                <a href="https://www.confluent.io/confluent-software-evaluation-license/">Confluent Software Evaluation License.</a>
+                                Comments, questions and suggestions related to preview features
+                                are encouraged. Confluent customers may submit questions and
+                                suggestions via the
+                                <a href="https://support.confluent.io/">Confluent Support Portal.</a>]]>
+								</supportSummary>
+								<supportUrl>${confluent.subscription.url}</supportUrl>
+								<supportLogo>${project.basedir}/logos/confluent.png</supportLogo>
+
+								<ownerUsername>confluentinc</ownerUsername>
+								<ownerName>${project.organization.name}</ownerName>
+								<ownerUrl>${project.organization.url}</ownerUrl>
+								<ownerType>organization</ownerType>
+								<ownerLogo>${project.basedir}/logos/confluent.png</ownerLogo>
+								<confluentControlCenterIntegration>true</confluentControlCenterIntegration>
+
+								<sourceUrl>none</sourceUrl>
+
+								<componentTypes>
+									<componentType>sink</componentType>
+								</componentTypes>
+
+								<tags>
+									<tag>hadoop</tag>
+									<tag>hadoop3</tag>
+									<tag>hdfs</tag>
+									<tag>hdfs3</tag>
+									<tag>hive</tag>
+								</tags>
+
+								<confluentControlCenterIntegration>true</confluentControlCenterIntegration>
+							</configuration>
+						</execution>
+					</executions>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.3</version>
+					<configuration>
+						<compilerArgs>
+							<arg>-Xlint:all</arg>
+							<arg>-Xlint:-deprecation</arg>
+							<arg>-Xlint:-processing</arg>
+							<arg>-Werror</arg>
+						</compilerArgs>
+						<showWarnings>true</showWarnings>
+						<showDeprecation>false</showDeprecation>
+					</configuration>
+				</plugin>
+				<plugin>
+					<artifactId>maven-assembly-plugin</artifactId>
+					<configuration>
+						<descriptors>
+							<descriptor>src/assembly/development.xml</descriptor>
+							<descriptor>src/assembly/package.xml</descriptor>
+						</descriptors>
+						<attach>false</attach>
+					</configuration>
+					<executions>
+						<execution>
+							<id>make-assembly</id>
+							<phase>package</phase>
+							<goals>
+								<goal>single</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<configuration>
+						<reuseForks>false</reuseForks>
+						<forkCount>1</forkCount>
+						<systemPropertyVariables>
+							<datanucleus.schema.autoCreateAll>true</datanucleus.schema.autoCreateAll>
+						</systemPropertyVariables>
+						<additionalClasspathElements>
+							<!--puts hive-site.xml on classpath - w/o HMS tables are not created -->
+							<additionalClasspathElement>src/test/resources/conf</additionalClasspathElement>
+						</additionalClasspathElements>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-checkstyle-plugin</artifactId>
+					<executions>
+						<execution>
+							<id>validate</id>
+							<phase>validate</phase>
+							<configuration>
+								<suppressionsLocation>checkstyle/suppressions.xml</suppressionsLocation>
+							</configuration>
+							<goals>
+								<goal>check</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+				<plugin>
+					<artifactId>maven-clean-plugin</artifactId>
+					<version>3.0.0</version>
+					<configuration>
+						<filesets>
+							<fileset>
+								<directory>.</directory>
+								<includes>
+									<include>build/</include>
+									<include>derby.log</include>
+									<include>metastore_db/</include>
+								</includes>
+							</fileset>
+						</filesets>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>com.mycila</groupId>
+					<artifactId>license-maven-plugin</artifactId>
+					<configuration>
+						<excludes>
+							<exclude>src/test/docker/**</exclude>
+							<exclude>config/*</exclude>
+							<exclude>metastore_db/**</exclude>
+						</excludes>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+	</build>
+
+	<profiles>
+		<profile>
+			<id>standalone</id>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-assembly-plugin</artifactId>
+						<configuration>
+							<descriptors>
+								<descriptor>src/assembly/standalone.xml</descriptor>
+							</descriptors>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<!-- Generate the configuration documentation -->
+			<id>docs</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>exec-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<!-- Execute with: mvn -Pdocs exec:java@sink-config-docs -->
+								<id>sink-config-docs</id>
+								<goals>
+									<goal>java</goal>
+								</goals>
+								<configuration>
+									<mainClass>io.confluent.connect.hdfs3.Hdfs3SinkConnectorConfig</mainClass>
+									<classpathScope>compile</classpathScope>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>licenses-source</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>exec-maven-plugin</artifactId>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-clean-plugin</artifactId>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
+
+</project>
